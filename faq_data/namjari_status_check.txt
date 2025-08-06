@@ -1,0 +1,6 @@
+Question: আমার নামজারি স্ট্যাটাস জানতে চাই
+Answer: keep Key pad on
+Question: নামজারি আবেদনের স্ট্যাটাস কী অবস্থায় আছে?
+Answer: keep Key pad on
+Question: আমি নামজারি করেছি, তা কী অবস্থায় আছে?
+Answer: keep Key pad on
