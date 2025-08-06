@@ -1,79 +1,86 @@
-## Bengali FAQ predefined Q/A RAG System
+# Deterministic Answer RAG - Ministry of Land (MoL)
 
-**Production-ready Bengali FAQ system with ultra-precision hybrid matching and cross-collection disambiguation.**
+A Bengali FAQ system for Ministry of Land services using retrieval-augmented generation (RAG) with semantic similarity matching.
 
-## ⚡ Key Features
+## Overview
 
-- **🎯 Ultra-Precision Matching**: 90%+ accuracy with hybrid scoring (embeddings + n-grams + keywords + phrases)
-- **🏗️ File-as-Cluster Architecture**: Each FAQ file = separate ChromaDB collection for perfect isolation
-- **🧠 Cross-Collection Disambiguation**: Authority scoring prevents Islamic vs Conventional banking confusion
-- **⚡ Embedding Efficiency**: 1 API call per query (vs 11+ in naive implementations)
-- **🌍 Bengali Text Processing**: Advanced normalization and domain-specific phrase matching
-- **🔀 Multiple Interfaces**: REST API, batch processing, and interactive CLI
+This system provides automated question-answering for Ministry of Land (MoL) services in Bengali. It uses ChromaDB for vector storage, OpenAI embeddings for semantic similarity, and includes sophisticated Bengali text normalization to handle various Unicode representations.
 
+## Features
 
-## 🚀 Quick Start
+- **Bengali Language Support**: Advanced text normalization for consistent Unicode handling
+- **Semantic Search**: OpenAI embeddings with ChromaDB vector database
+- **File-Based Collections**: Each FAQ file becomes a separate ChromaDB collection
+- **Multiple Interfaces**: REST API, batch processing, and interactive CLI
+- **Hybrid Matching**: Combines semantic similarity with exact matching
+
+## Architecture
+
+### Core Components
+
+- `faq_service.py` - Main service with FAQ loading and query processing
+- `bengali_normalizer.py` - Bengali text normalization and Unicode handling
+- `api_server.py` - Flask REST API server
+- `interactive.py` - Interactive CLI interface
+- `batch_processor.py` - Batch query processing
+- `faq_semantic_similarity.py` - Semantic analysis tools
+
+### Data Structure
+
+```
+faq_data/
+├── foreigner_namjari_how.txt
+├── how_to_open_holding.txt
+├── how_to_watch_khatian_copy.txt
+├── map_fees.txt
+├── namjari_mutation_fees.txt
+└── ... (21 FAQ files total)
+```
+
+Each FAQ file contains question-answer pairs in Bengali, covering different aspects of land services.
+
+## Installation
 
 ### Prerequisites
-- Python 3.12
+- Python 3.12+
 - OpenAI API key
-- Git
 
-### Installation
+### Setup
+
 ```bash
 # Clone the repository
-git clone <repository>
-cd deterministic-answer-rag-openai
+git clone <repository-url>
+cd deterministic-answer-rag-MoL
 
 # Install dependencies
-pip install -r requirements.txt --no-deps
+pip install -r requirements.txt
 
-# Set your OpenAI API key
+# Set OpenAI API key
 export OPENAI_API_KEY="your_api_key_here"
 ```
 
-## 🔧 Three Ways to Use the System
+## Usage
 
-### 1. 💬 Interactive CLI Interface
-
-**Best for**: Real-time testing, development, and exploring the system capabilities.
+### 1. Interactive CLI
 
 ```bash
 python interactive.py
 ```
 
-**Features:**
+Features:
 - Real-time question answering
-- Debug mode for detailed analysis
-- System statistics display
-- Bengali and English support
+- Debug mode with detailed matching scores
+- System statistics
+- Command support (`debug on/off`, `stats`, `exit`)
 
-**Usage Examples:**
+### 2. REST API Server
+
 ```bash
-🔍 Enter your query: ইয়াকিন অঘনিয়া সেভিংস স্কিমের ন্যূনতম কিস্তির পরিমাণ কত?
-✅ MATCH FOUND (Confidence: 98.3%)
-📁 Source: yaqeen.txt
-🗂️  Collection: faq_yaqeen
-❓ Question: ইয়াকিন অঘনিয়া বা লাখপতি সেভিংস স্কিমের ন্যূনতম কিস্তির পরিমাণ কত?
-💬 Answer: ইয়াকিন অঘনিয়া বা লাখপতি সেভিংস স্কিমের ন্যূনতম কিস্তির পরিমাণ ৫০০ টাকা।
-
-# Available commands:
-# - debug on/off    : Toggle debug mode
-# - stats          : Show system statistics  
-# - exit           : Quit the program
-```
-
-### 2. 🌐 REST API Server
-
-**Best for**: Production deployments, web applications, and microservices integration.
-
-#### Start the Server
-```bash
-# Default (localhost:5000)
+# Start server (default: localhost:5000)
 python api_server.py
 
-# Custom host and port
-python api_server.py --host 0.0.0.0 --port 8000
+# Custom host/port
+python api_server.py --host 0.0.0.0 --port 8080
 
 # With debug mode
 python api_server.py --debug
@@ -81,350 +88,71 @@ python api_server.py --debug
 
 #### API Endpoints
 
-**📖 Documentation**: Visit `http://localhost:5000/` for complete API docs
-
-**1. Single Query - Retail Banking**
+**Single Query**
 ```bash
 curl -X POST http://localhost:5000/api/query \
   -H "Content-Type: application/json" \
-  -d '{
-    "query": "এমটিবি ইন্সপায়ার একাউন্ট খুলতে কি কি ডকুমেন্ট লাগে?",
-    "debug": false
-  }'
+  -d '{"query": "নামজারি করতে কি ডকুমেন্ট লাগে?", "debug": false}'
 ```
 
-**Response:**
-```json
-{
-  "query": "এমটিবি ইন্সপায়ার একাউন্ট খুলতে কি কি ডকুমেন্ট লাগে?",
-  "found": true,
-  "confidence": 0.956,
-  "matched_question": "ইন্সপায়ার একাউন্ট খুলতে কি কি ডকুমেন্ট লাগে?",
-  "answer": "ইন্সপায়ার একাউন্ট খুলতে জাতীয় পরিচয়পত্র, পাসপোর্ট সাইজ ছবি এবং ন্যূনতম জমার পরিমাণ প্রয়োজন।",
-  "source": "retails_products.txt",
-  "collection": "faq_retail",
-  "timestamp": "2024-12-01T10:30:00"
-}
-```
-
-**2. Single Query - Islamic Banking**
-```bash
-curl -X POST http://localhost:5000/api/query \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "ইয়াকিন অঘনিয়া সেভিংস স্কিমের সুদের হার কত?",
-    "debug": true
-  }'
-```
-
-**Response:**
-```json
-{
-  "query": "ইয়াকিন অঘনিয়া সেভিংস স্কিমের সুদের হার কত?",
-  "found": true,
-  "confidence": 0.892,
-  "matched_question": "ইয়াকিন অঘনিয়া সেভিংস স্কিমে কি হারে মুনাফা দেওয়া হয়?",
-  "answer": "ইয়াকিন অঘনিয়া সেভিংস স্কিমে বর্তমানে ৮% হারে মুনাফা প্রদান করা হয়।",
-  "source": "yaqeen.txt",
-  "collection": "faq_yaqeen",
-  "timestamp": "2024-12-01T10:32:15",
-  "debug": {
-    "detected_collections": ["yaqeen"],
-    "candidates": [
-      {
-        "question": "ইয়াকিন অঘনিয়া সেভিংস স্কিমে কি হারে মুনাফা দেওয়া হয়?",
-        "score": 0.892,
-        "collection": "faq_yaqeen"
-      },
-      {
-        "question": "ইয়াকিন সঞ্চয় হিসাবে সুদের হার কত?",
-        "score": 0.756,
-        "collection": "faq_yaqeen"
-      }
-    ],
-    "threshold": 0.9
-  }
-}
-```
-
-**3. Batch Processing**
+**Batch Processing**
 ```bash
 curl -X POST http://localhost:5000/api/batch \
   -H "Content-Type: application/json" \
-  -d '{
-    "queries": [
-      "ইয়াকিন একাউন্ট কি?",
-      "এসএমই লোনের সুদের হার কত?",
-      "কার্ড ব্লক করতে চাই",
-      "মহিলাদের জন্য কি বিশেষ সুবিধা আছে?"
-    ],
-    "debug": false
-  }'
+  -d '{"queries": ["নামজারি ফি কত?", "খতিয়ান কপি কিভাবে পাব?"]}'
 ```
 
-**Response:**
-```json
-{
-  "metadata": {
-    "total_queries": 4,
-    "processed_queries": 4,
-    "matched_count": 3,
-    "match_rate": 75.0,
-    "timestamp": "2024-12-01T10:35:42"
-  },
-  "results": [
-    {
-      "query_id": 1,
-      "query": "ইয়াকিন একাউন্ট কি?",
-      "found": true,
-      "confidence": 0.945,
-      "matched_question": "ইয়াকিন একাউন্ট কী?",
-      "answer": "ইয়াকিন একাউন্ট একটি ইসলামিক সঞ্চয় হিসাব...",
-      "source": "yaqeen.txt",
-      "collection": "faq_yaqeen"
-    },
-    {
-      "query_id": 2,
-      "query": "এসএমই লোনের সুদের হার কত?",
-      "found": true,
-      "confidence": 0.887,
-      "matched_question": "এসএমই লোনের সুদের হার কেমন?",
-      "answer": "এসএমই লোনের সুদের হার ১২% থেকে ১৮% পর্যন্ত...",
-      "source": "sme_banking.txt",
-      "collection": "faq_sme"
-    },
-    {
-      "query_id": 3,
-      "query": "কার্ড ব্লক করতে চাই",
-      "found": true,
-      "confidence": 0.923,
-      "matched_question": "কার্ড ব্লক করার নিয়ম কি?",
-      "answer": "কার্ড ব্লক করতে ১৬২৪৭ নম্বরে কল করুন...",
-      "source": "card_faqs.txt",
-      "collection": "faq_card"
-    },
-    {
-      "query_id": 4,
-      "query": "মহিলাদের জন্য কি বিশেষ সুবিধা আছে?",
-      "found": false,
-      "confidence": 0.654,
-      "message": "দুঃখিত, আমি আপনার প্রশ্নের উত্তর খুঁজে পাইনি।"
-    }
-  ]
-}
-```
-
-**4. Health Check**
+**Health Check**
 ```bash
 curl http://localhost:5000/api/health
 ```
 
-**5. System Statistics**
+**System Stats**
 ```bash
 curl http://localhost:5000/api/stats
 ```
 
-### 3. 📊 Batch Processor
+### 3. Batch Processor
 
-**Best for**: Processing large volumes of queries, testing, and performance analysis.
-
-#### Basic Usage
 ```bash
-# Process queries from input.txt
+# Process queries from file
 python batch_processor.py input.txt
 
-# Specify custom output file
-python batch_processor.py input.txt -o my_results.json
+# Custom output file
+python batch_processor.py input.txt -o results.json
 
-# Enable debug mode
+# With debug information
 python batch_processor.py input.txt --debug
 
-# Show system stats before processing
+# Show system stats
 python batch_processor.py input.txt --stats
 ```
 
-#### Input File Format
-Create a text file with one query per line:
-
-**input.txt:**
+**Input file format** (one query per line):
 ```
-মহিলা দের জন্য কি এসএমই একাউন্ট খোলা যায়?
-এসএমই পিআরএ একাউন্ট খুলতে কি ডকুমেন্টস লাগবে?
-কি কি ধরণের এসএমই একাউন্ট ওপেন করা যায়?
-এমটিবি বুনিয়াদ সম্পর্কে জানতে চাই।
-ইয়াকিন অঘনিয়া কি?
+নামজারি করার নিয়ম কি?
+খতিয়ান কপি ডাউনলোড করার উপায়?
+মৃত ব্যক্তির নামে ট্যাক্স দিতে হবে কি?
 ```
 
-#### Output Example
-The processor generates a JSON file with detailed results:
+## Configuration
 
-```json
-{
-  "metadata": {
-    "input_file": "input.txt",
-    "output_file": "batch_results_20241201_143022.json",
-    "processed_at": "2024-12-01T14:30:22",
-    "total_queries": 5,
-    "matched_count": 4,
-    "match_rate": 80.0,
-    "system_mode": "embedding_mode"
-  },
-  "results": [
-    {
-      "query_id": 1,
-      "query": "মহিলা দের জন্য কি এসএমই একাউন্ট খোলা যায়?",
-      "found": true,
-      "confidence": 0.923,
-      "matched_question": "মহিলাদের জন্য কি এসএমই একাউন্ট খোলা যায়?",
-      "answer": "হ্যাঁ, মহিলারা এসএমই একাউন্ট খুলতে পারেন...",
-      "source": "sme_banking.txt",
-      "collection": "faq_sme"
-    }
-  ]
-}
-```
-
-## 🔧 Command Line Options
-
-### Interactive CLI
-```bash
-python interactive.py
-# No command line options - all controls are interactive
-```
-
-### API Server
-```bash
-python api_server.py [options]
-
-Options:
-  --host HOST      Host to bind to (default: 0.0.0.0)
-  --port PORT      Port to bind to (default: 5000)  
-  --debug          Run in debug mode
-```
-
-### Batch Processor
-```bash
-python batch_processor.py input_file [options]
-
-Arguments:
-  input_file       Input text file with queries (one per line)
-
-Options:
-  -o, --output     Output JSON file for results
-  -d, --debug      Include debug information
-  --stats          Show system statistics before processing
-```
-
-## 🏗️ Architecture
-
-### File-as-Cluster System
-```
-faq_data/
-├── yaqeen.txt          → faq_yaqeen collection (Islamic banking)
-├── retails_products.txt → faq_retail collection (Conventional)
-├── sme_banking.txt     → faq_sme collection 
-├── card_faqs.txt       → faq_card collection
-└── ...                 → 9 total collections
-```
-
-### Ultra-Precision Matching Pipeline
-```
-Query → Prime Word Routing → Embedding Search → Hybrid Enhancement → 
-Cross-Collection Disambiguation → Authority Scoring → Best Match
-```
-
-## 🛠️ Troubleshooting
-
-### Common Issues
-
-**1. Service Not Initialized**
-```bash
-❌ FAQ Service not initialized!
-```
-**Solution:** Check that FAQ files exist in `faq_data/` directory and OpenAI API key is set.
-
-**2. No OpenAI API Key**
-```bash
-⚠️ Running in TEST MODE (no embeddings)
-```
-**Solution:** Set environment variable: `export OPENAI_API_KEY="your_key"`
-
-**3. Port Already in Use (API Server)**
-```bash
-OSError: [Errno 98] Address already in use
-```
-**Solution:** Use a different port: `python api_server.py --port 8080`
-
-**4. Empty Results**
-```bash
-❌ No queries found in input file
-```
-**Solution:** Ensure input file has one query per line and is UTF-8 encoded.
-
-### Debug Mode
-
-All interfaces support debug mode for detailed analysis:
-
-- **Interactive**: Type `debug on`
-- **API**: Set `"debug": true` in JSON requests  
-- **Batch**: Use `--debug` flag
-
-Debug output includes:
-- Detected collections
-- Candidate matches with scores
-- Confidence thresholds
-- Hybrid matching details
-
-## 🔧 Core Components
-
-| File | Purpose |
-|------|---------|
-| `faq_service.py` | Main service with routing and search logic |
-| `hybrid_matcher.py` | Ultra-precision matching algorithms |
-| `config.json` | System configuration |
-| `api_server.py` | REST API interface |
-| `batch_processor.py` | Batch processing interface |
-| `interactive.py` | Interactive CLI interface |
-
-## 🎯 Technical Highlights
-
-### Ultra-Precision Matching
-- **Collection-specific phrase libraries**: Islamic vs Conventional banking terms
-- **Keyword expansion**: `"লাখপতি"` → `"এমটিবি লাখপতি"` for retail collection
-- **N-gram weighting**: Collection-aware bigram/trigram importance
-- **Sequential pattern recognition**: Word order significance
-- **Negative keyword penalties**: Prevents wrong collection matches
-
-### Embedding Efficiency
-- **Query embedding caching**: Create once, reuse across all collections
-- **Smart routing**: Prime word detection → targeted search → fallback to all
-- **Batch optimization**: 91% reduction in API calls
-
-### Cross-Collection Disambiguation
-- **Authority scoring**: Domain expertise weighted by intent
-- **Dynamic thresholds**: Adjust confidence based on ambiguity
-- **Intent detection**: Islamic vs Conventional banking classification
-
-## ⚙️ Configuration
-
-The system uses `config.json` for all configuration settings. Edit this file to customize:
+Edit `config.json` to customize system behavior:
 
 ```json
 {
   "models": {
-    "embedding_model": "text-embedding-3-large"
+    "embedding_model": "text-embedding-3-small",
+    "core_model": "gpt-4.1-mini"
   },
   "system": {
-    "confidence_threshold": 0.90,
+    "confidence_threshold": 0.0,
     "max_candidates": 1,
     "embedding_dimensions": 1024
   },
   "directories": {
     "faq_dir": "faq_data",
     "cache_dir": "cache"
-  },
-  "logging": {
-    "level": "INFO"
   },
   "matcher_weights": {
     "exact_match": 1.0,
@@ -437,29 +165,107 @@ The system uses `config.json` for all configuration settings. Edit this file to 
 }
 ```
 
-**Key Settings:**
-- **confidence_threshold**: Minimum match score (0.9 = 90% confidence required)
-- **embedding_model**: OpenAI model ("text-embedding-3-large" for best accuracy)
-- **embedding_dimensions**: Vector dimensions (1024 for balanced performance)
-- **matcher_weights**: Fine-tune hybrid matching algorithm components
-- **directories**: FAQ data and cache locations
-- **logging**: System log level (DEBUG, INFO, WARNING, ERROR)
+## FAQ Data Format
 
-## 📈 System Stats (this is subject to changes)
+Each FAQ file should contain question-answer pairs:
 
-- **Total Collections**: 9 (one per FAQ domain)
-- **Total Questions**: 338+ across all domains
+```
+Question: নামজারি করতে কি ডকুমেন্ট প্রয়োজন?
+Answer: নামজারি করতে মূল দলিল, জাতীয় পরিচয়পত্র, খতিয়ান কপি এবং অন্যান্য সংশ্লিষ্ট কাগজপত্র প্রয়োজন।
+
+Question: নামজারি ফি কত টাকা?
+Answer: নামজারি ফি জমির পরিমাণ অনুযায়ী নির্ধারিত হয়। বিস্তারিত তথ্যের জন্য সংশ্লিষ্ট অফিসে যোগাযোগ করুন।
+```
+
+## Bengali Text Processing
+
+The system includes sophisticated Bengali text normalization:
+
+- Unicode variation handling (ya-phala, ra-phala)
+- Conjunct character normalization
+- Case-insensitive matching
+- Diacritical mark handling
+- Consistent encoding across collections
+
+## API Response Format
+
+```json
+{
+  "query": "নামজারি করার নিয়ম কি?",
+  "found": true,
+  "confidence": 0.92,
+  "matched_question": "নামজারি করতে কি ডকুমেন্ট প্রয়োজন?",
+  "answer": "নামজারি করতে মূল দলিল, জাতীয় পরিচয়পত্র...",
+  "source": "naamkharij_documents.txt",
+  "collection": "faq_naamkharij_documents",
+  "timestamp": "2025-08-06T12:30:15"
+}
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Service not initialized**: Check FAQ files in `faq_data/` directory
+2. **No OpenAI API key**: Set `OPENAI_API_KEY` environment variable
+3. **Port in use**: Use different port with `--port` flag
+4. **Empty results**: Ensure input files are UTF-8 encoded with proper format
+
+### Debug Mode
+
+Enable debug mode for detailed analysis:
+- Interactive: `debug on`
+- API: `"debug": true` in request
+- Batch: `--debug` flag
+
+Debug output includes:
+- Collection matching details
+- Similarity scores
+- Candidate matches
+- Processing pipeline steps
+
+## System Statistics
+
+- **Total Collections**: 21 (one per FAQ file)
 - **Supported Languages**: Bengali (primary), English (fallback)
-- **Embedding Dimensions**: 1024 (text-embedding-3-large)
-- **RunTime Model**: gpt-4.1-nano
+- **Embedding Model**: text-embedding-3-small
+- **Vector Dimensions**: 1024
+- **Confidence Threshold**: Configurable (default: 0.0)
 
-## 🛠️ Requirements
+## Dependencies
 
-- **Python**: 3.12
-- **OpenAI API**: For embeddings
-- **ChromaDB**: Vector storage
-- **Dependencies**: Listed in `requirements.txt`
+Core requirements:
+- `openai` - OpenAI API client
+- `chromadb` - Vector database
+- `flask` - REST API framework
+- `numpy` - Numerical operations
+- `matplotlib/seaborn` - Visualization tools
+
+See `requirements.txt` for complete dependency list.
+
+## Development
+
+### Adding New FAQ Collections
+
+1. Create new `.txt` file in `faq_data/` directory
+2. Follow the Question/Answer format
+3. Restart the service to load new collection
+
+### Customizing Text Processing
+
+Modify `bengali_normalizer.py` to adjust:
+- Character mappings
+- Unicode normalization
+- Text cleaning rules
+
+### Tuning Similarity Matching
+
+Adjust weights in `config.json`:
+- `exact_match` - Exact string matching weight
+- `embedding` - Semantic similarity weight
+- `ngram_match` - N-gram matching weight
+- `confidence_threshold` - Minimum match score
 
 ---
 
-**** Deterministic RAG system for predefined Bengali FAQ systems**
+**Deterministic Answer RAG System for Ministry of Land Services**
